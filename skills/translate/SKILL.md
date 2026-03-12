@@ -9,45 +9,25 @@ Translate new entries in XLF translation files by finding `state="new"` targets,
 
 ## Workflow
 
-### Step 1: Find Changed Translation Files
+### Step 1: Extract New Translation Entries
 
-Run these commands to find changed translation files:
-```bash
-git diff --name-only | grep -E 'messages\.[a-z]{2}\.xlf$'
-git diff --cached --name-only | grep -E 'messages\.[a-z]{2}\.xlf$'
+Run the extraction script using the Bash tool:
+```
+python3 skills/translate/scripts/find_new_translations.py
 ```
 
-Combine results and deduplicate. If no changed translation files found, inform the user.
+This outputs JSON with all changed XLF files and their `state="new"` entries, including translation IDs, source/target text, line numbers, and placeholders. If the `files` array is empty, inform the user that no new translations were found.
 
-### Step 2: Extract New Translations
+### Step 2: Find Source Context
 
-For each changed `.xlf` file:
-1. Read the file content
-2. Parse to find all `<trans-unit>` elements
-3. Filter for those containing `<target state="new">`
-4. Extract for each:
-   - `id` attribute (translation ID)
-   - `<source>` content (English text)
-   - `<target>` content (current translation, may be empty or placeholder)
-   - Any placeholder elements (`<x .../>`)
+For each translation ID from the script output, use the **Grep** tool to find its usage in the codebase:
 
-### Step 3: Find Source Context
+- Search for `@@{ID}` with file pattern `**/*.ts` to find `$localize` strings
+- Search for `@@{ID}` with file pattern `**/*.html` to find `i18n` attributes
 
-For each translation ID, search for its usage in the codebase:
+Use the **Read** tool on matched files to get 5-10 lines of surrounding context.
 
-**TypeScript files** (`$localize` strings):
-```bash
-grep -r "@@{ID}:" --include="*.ts" apps/ libs/
-```
-
-**HTML files** (`i18n` attributes):
-```bash
-grep -r "@@{ID}\"" --include="*.html" apps/ libs/
-```
-
-Read the surrounding code (5-10 lines) to understand context.
-
-### Step 4: Generate & Review Translations
+### Step 3: Generate & Review Translations
 
 For each `state="new"` entry, present to the user:
 
@@ -76,7 +56,7 @@ Proposed Translation:
 - Provide an alternative translation
 - Skip this entry
 
-### Step 5: Apply Approved Translations
+### Step 4: Apply Approved Translations
 
 For approved translations, update the XLF file:
 1. Replace the `<target>` element content with the approved translation
