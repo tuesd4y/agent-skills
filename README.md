@@ -30,6 +30,26 @@ Automated translation workflow for Angular i18n XLF files. Finds new translation
   - Batch processing with summaries
 
 
+### work
+Start working on a Jira ticket end-to-end. Fetches issue details via Atlassian MCP, creates a worktree with a properly-named branch, gathers context, and enters planning mode.
+
+  Use when:
+  - Starting work on a Jira ticket (`/work BRO-67`)
+  - Bootstrapping a feature, bugfix, or hotfix from a ticket
+
+  Workflow:
+  1. Parses the Jira issue key from arguments (supports bare keys, URLs, `--hotfix` flag)
+  2. Fetches issue details, description, and linked issues via Atlassian MCP
+  3. Creates a git worktree with a conventionally-named branch (`feature/`, `bugfix/`, or `hotfix/`)
+  4. Transitions the issue to "In Progress"
+  5. Gathers context: parent epic, linked issues, Confluence pages, sibling tasks
+  6. Presents a structured summary with open questions
+  7. Clarifies ambiguities, then enters plan mode
+
+  Requirements:
+  - Atlassian MCP plugin configured with Jira access
+
+
 ## Installation
 
 ```bash
