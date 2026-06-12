@@ -30,6 +30,23 @@ Automated translation workflow for Angular i18n XLF files. Finds new translation
   - Batch processing with summaries
 
 
+### commit
+Commit changed files with a minimal, optionally JIRA-prefixed message. Runs on Sonnet in Claude Code.
+
+  Use when:
+  - Committing finished work (`/commit`, optionally with file paths or extra context)
+  - You want a tight, review-friendly commit message without boilerplate
+
+  Workflow:
+  1. Detects the JIRA issue key from the branch name (falls back to conversation context)
+  2. Stages only task-related files by explicit path (never `git add -A`)
+  3. Drafts a minimal imperative commit message (≤ 100 chars, body only when needed)
+  4. Confirms files and message with the user before committing
+  5. On commit hook failures: auto-fixes trivial issues (whitespace, formatting, re-staging
+     hook-modified files) and retries; asks before substantive fixes (lint/type errors,
+     failing tests, message policy). Never uses `--no-verify`.
+
+
 ### work
 Start working on a Jira ticket end-to-end. Fetches issue details via Atlassian MCP, creates a worktree with a properly-named branch, gathers context, and enters planning mode.
 
