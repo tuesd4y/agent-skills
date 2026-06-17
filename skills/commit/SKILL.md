@@ -1,13 +1,13 @@
 ---
 name: commit
 description: "Commit changed files with a minimal, optionally JIRA-prefixed message. Trigger on: '/commit', 'commit this', 'commit my changes'. Detects the issue key from the branch, stages only task-related files, confirms before committing, and analyzes pre-commit hook failures — auto-fixing trivial formatting issues, asking before anything bigger."
-model: sonnet
+disable-model-invocation: true
 allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git rev-parse:*), Bash(git add:*), Bash(git commit:*), Read, Edit, Grep, AskUserQuestion
 ---
 
 # Commit
 
-Create a git commit with a minimal commit message. Follow these steps in order.
+Create a git commit with a minimal commit message. Use subagents. Follow these steps in order.
 
 ## 1. Detect the JIRA issue key
 
