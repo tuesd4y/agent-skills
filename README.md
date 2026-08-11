@@ -57,7 +57,8 @@ Open a minimal, structured pull request for the current branch.
   Workflow:
   1. Gathers context in one script call: base branch, commits and diff vs merge-base,
      push state, PR templates, existing PR for the branch
-  2. Drafts a short imperative title (JIRA-prefixed when the branch names a ticket)
+  2. Drafts a short imperative title (JIRA-prefixed when the branch names a ticket);
+     suggests a real `feature/`/`bugfix/` remote branch name when the local name is temporary
   3. Fills the repo's PR template if one exists (keeps all sections and checklists);
      otherwise uses a minimal summary + Changes + Notes structure
   4. Confirms title and body with the user before pushing the branch and creating the PR

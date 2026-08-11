@@ -30,6 +30,8 @@ If a PR already exists for the branch, skip to Step 5 (update instead of create)
 
 Treat the JIRA key as a candidate, not a fact — same rules as the commit skill: reject non-ticket matches, fall back to a `[A-Z]+-\d+` mention in the recent conversation, else no prefix.
 
+Also judge whether the local branch name is temporary or auto-generated (random word pairs like `lucid-dragon`, worktree names like `wt-1234` or `tmp-*` — anything that doesn't describe the change). If it is, propose a real name for the **remote** branch: `feature/`, `bugfix/`, or `hotfix/` prefix depending on the nature of the change, then the lowercased JIRA key (if any) and a short kebab-case slug — e.g. `feature/bro-32-pr-skill`. The local branch keeps its name; only the branch pushed to the remote is renamed.
+
 ## 2. Draft the title
 
 - Imperative mood, no trailing period, ≤ 70 characters including the JIRA prefix.
@@ -64,7 +66,7 @@ Keep it short and structured — bullets over prose, no marketing, no attributio
 Ask the user via `AskUserQuestion` whether to create the PR. The dialog must be self-contained — do not rely on text printed before the tool call being visible:
 
 - Put the full title and body in the `preview` field of the **Create PR** option.
-- State in the `question` text: the base branch, the number of commits, and — if the branch isn't pushed or is ahead of its upstream — that approving will **push the branch** to the remote.
+- State in the `question` text: the base branch, the number of commits, and — if the branch isn't pushed or is ahead of its upstream — that approving will **push the branch** to the remote. If a remote branch name was proposed (temporary local name), state it here too so the user can veto or tweak it via a note.
 - Offer a **Create as draft** option (same preview) and **Cancel**.
 - No separate "edit" option. If the user picks a create option with a note attached, apply the note's tweak and proceed without re-asking. If they answer via "Other", treat it as redraft instructions: revise and confirm again.
 
@@ -73,11 +75,11 @@ Do not push or create anything until they approve.
 ## 5. Create or update
 
 On approval:
-- Push if needed: `git push -u origin <branch>` (only when there's no upstream or the branch is ahead).
+- Push if needed (only when there's no upstream or the branch is ahead): `git push -u origin <branch>` — or, when a remote branch name was proposed, `git push -u origin <local-branch>:<remote-branch>`.
 - Create: `gh pr create --base <base> --title "<title>" --body "$(cat <<'EOF'
 <body>
 EOF
-)"` — always pass the body via heredoc. Add `--draft` if the user chose draft.
+)"` — always pass the body via heredoc. Add `--draft` if the user chose draft, and `--head <remote-branch>` when the remote branch name differs from the local one.
 - Report the PR URL.
 
 **If a PR already exists** for the branch: show its current title/state, draft the updated title/body from the full branch diff, and confirm via the same dialog (option label **Update PR**, preview showing the new title and body). On approval, push if needed and run `gh pr edit` with the new title/body.
