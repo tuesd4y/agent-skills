@@ -47,6 +47,27 @@ Commit changed files with a minimal, optionally JIRA-prefixed message. Runs on S
      failing tests, message policy). Never uses `--no-verify`.
 
 
+### pr
+Open a minimal, structured pull request for the current branch.
+
+  Use when:
+  - Opening a PR for finished branch work (`/pr`, optionally with a base branch, `draft`, or extra context)
+  - You want a short, structured description (bullets over prose) without boilerplate
+
+  Workflow:
+  1. Gathers context in one script call: base branch, commits and diff vs merge-base,
+     push state, PR templates, existing PR for the branch
+  2. Drafts a short imperative title (JIRA-prefixed when the branch names a ticket);
+     suggests a real `feature/`/`bugfix/` remote branch name when the local name is temporary
+  3. Fills the repo's PR template if one exists (keeps all sections and checklists);
+     otherwise uses a minimal summary + Changes + Notes structure
+  4. Confirms title and body with the user before pushing the branch and creating the PR
+  5. Updates the existing PR instead if the branch already has one
+
+  Requirements:
+  - `gh` CLI authenticated for the repo's remote
+
+
 ### work
 Start working on a Jira ticket end-to-end. Fetches issue details via Atlassian MCP, creates a worktree with a properly-named branch, gathers context, and enters planning mode.
 

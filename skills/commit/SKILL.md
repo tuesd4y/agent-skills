@@ -2,24 +2,24 @@
 name: commit
 description: "Commit changed files with a minimal, optionally JIRA-prefixed message. Trigger on: '/commit', 'commit this', 'commit my changes'. Detects the issue key from the branch, stages only task-related files, confirms before committing, and analyzes pre-commit hook failures — auto-fixing trivial formatting issues, asking before anything bigger."
 disable-model-invocation: true
-allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git rev-parse:*), Bash(git add:*), Bash(git commit:*), Read, Edit, Grep, AskUserQuestion
+allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git rev-parse:*), Bash(git add:*), Bash(git commit:*), Bash(*/scripts/gather-context.sh:*), Read, Edit, Grep, AskUserQuestion
 ---
 
 # Commit
 
-Create a git commit with a minimal commit message. Use subagents. Follow these steps in order.
+Create a git commit with a minimal commit message. Do not use subagents. Follow these steps in order.
 
-## 1. Detect the JIRA issue key
+## 1. Gather context
 
-Run these in parallel:
-- `git rev-parse --abbrev-ref HEAD` to get the current branch
-- `git status` (no `-uall`) to see what's changed
-- `git diff` and `git diff --cached` to see the actual changes
-- `git log -5 --oneline` to match the repo's commit style
+Run the bundled script in a single Bash call (the skill's base directory is shown when the skill is invoked):
 
-From the branch name, extract a JIRA-style key matching the pattern `[A-Z]+-\d+` (case-insensitive — uppercase it). Examples: `feature/bro-32-foo` → `BRO-32`, `BRO-105/refactor` → `BRO-105`, `feature/uc-1-gtfs-import` → no match.
+```
+bash <skill-base-dir>/scripts/gather-context.sh
+```
 
-If the branch yields no key, scan the most recent ~10 user messages in this conversation for a `[A-Z]+-\d+` mention and use the most recent one. If still nothing, proceed without a prefix.
+It prints the branch, a JIRA key candidate extracted from the branch name, `git status`, the last 5 commits (to match the repo's commit style), and the staged/unstaged diffs (truncated past 400 lines — set `MAX_DIFF_LINES` to raise).
+
+Treat the JIRA key as a candidate, not a fact: reject it if it's clearly not a ticket reference (e.g. `feature/uc-1-gtfs-import` yields `UC-1`, which is a use-case number, not an issue). If the key is `none` or rejected, scan the most recent ~10 user messages in this conversation for a `[A-Z]+-\d+` mention and use the most recent one. If still nothing, proceed without a prefix.
 
 ## 2. Decide what to stage
 
@@ -39,12 +39,13 @@ Hard rules:
 
 ## 4. Confirm before committing
 
-Print:
-- The list of files you're about to stage.
-- The list of files you're deliberately leaving out, with one-line reasons.
-- The drafted commit message in a code block.
+Ask the user via `AskUserQuestion` whether to commit or cancel. The dialog must be self-contained — do not rely on text printed before the tool call being visible:
 
-Then ask the user via `AskUserQuestion` whether to commit, edit the message, or cancel. Do not commit until they approve.
+- Put the full drafted commit message in the `preview` field of the **Commit** option.
+- List the files you're about to stage, and the files you're deliberately leaving out (with one-line reasons), in the `question` text.
+- No separate "edit" option. If the user picks **Commit** with a note attached, apply the note's tweak to the message and commit without re-asking. If they answer via "Other", treat it as redraft instructions: revise and confirm again.
+
+Do not commit until they approve.
 
 ## 5. Commit
 
@@ -83,7 +84,7 @@ Anything requiring a judgment call or a real code change:
 - Lint or type errors that need manual code edits
 - Failing tests
 - Secret/credential detection findings
-- Commit-msg policy rejections (the user approved that exact message — show the adjusted message and confirm)
+- Commit-msg policy rejections (the user approved that exact message — confirm the adjusted message via `AskUserQuestion`, with the new message in the confirm option's `preview`)
 
 For these, summarize the failure in 1–3 lines, state your proposed fix, and ask via `AskUserQuestion` whether to **fix it**, **commit without those changes** (e.g. unstage the offending file, if that makes sense), or **cancel**. Apply the fix only on approval, then retry the commit.
 
