@@ -2,24 +2,24 @@
 name: commit
 description: "Commit changed files with a minimal, optionally JIRA-prefixed message. Trigger on: '/commit', 'commit this', 'commit my changes'. Detects the issue key from the branch, stages only task-related files, confirms before committing, and analyzes pre-commit hook failures — auto-fixing trivial formatting issues, asking before anything bigger."
 disable-model-invocation: true
-allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git rev-parse:*), Bash(git add:*), Bash(git commit:*), Read, Edit, Grep, AskUserQuestion
+allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git branch:*), Bash(git rev-parse:*), Bash(git add:*), Bash(git commit:*), Bash(*/scripts/gather-context.sh:*), Read, Edit, Grep, AskUserQuestion
 ---
 
 # Commit
 
-Create a git commit with a minimal commit message. Use subagents for Steps 1–3 only. Follow these steps in order.
+Create a git commit with a minimal commit message. Do not use subagents. Follow these steps in order.
 
-## 1. Detect the JIRA issue key
+## 1. Gather context
 
-Run these in parallel:
-- `git rev-parse --abbrev-ref HEAD` to get the current branch
-- `git status` (no `-uall`) to see what's changed
-- `git diff` and `git diff --cached` to see the actual changes
-- `git log -5 --oneline` to match the repo's commit style
+Run the bundled script in a single Bash call (the skill's base directory is shown when the skill is invoked):
 
-From the branch name, extract a JIRA-style key matching the pattern `[A-Z]+-\d+` (case-insensitive — uppercase it). Examples: `feature/bro-32-foo` → `BRO-32`, `BRO-105/refactor` → `BRO-105`, `feature/uc-1-gtfs-import` → no match.
+```
+bash <skill-base-dir>/scripts/gather-context.sh
+```
 
-If the branch yields no key, scan the most recent ~10 user messages in this conversation for a `[A-Z]+-\d+` mention and use the most recent one. If still nothing, proceed without a prefix.
+It prints the branch, a JIRA key candidate extracted from the branch name, `git status`, the last 5 commits (to match the repo's commit style), and the staged/unstaged diffs (truncated past 400 lines — set `MAX_DIFF_LINES` to raise).
+
+Treat the JIRA key as a candidate, not a fact: reject it if it's clearly not a ticket reference (e.g. `feature/uc-1-gtfs-import` yields `UC-1`, which is a use-case number, not an issue). If the key is `none` or rejected, scan the most recent ~10 user messages in this conversation for a `[A-Z]+-\d+` mention and use the most recent one. If still nothing, proceed without a prefix.
 
 ## 2. Decide what to stage
 
@@ -38,8 +38,6 @@ Hard rules:
 - If you do include a body: one blank line after the subject, then a tight paragraph or 2–3 short bullets. No headings, no co-author trailers, no marketing.
 
 ## 4. Confirm before committing
-
-Do not use subagents for this step or Step 5.
 
 Ask the user via `AskUserQuestion` whether to commit or cancel. The dialog must be self-contained — do not rely on text printed before the tool call being visible:
 
