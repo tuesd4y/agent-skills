@@ -7,7 +7,7 @@ allowed-tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git b
 
 # Commit
 
-Create a git commit with a minimal commit message. Use subagents. Follow these steps in order.
+Create a git commit with a minimal commit message. Use subagents for Steps 1–3 only. Follow these steps in order.
 
 ## 1. Detect the JIRA issue key
 
@@ -39,12 +39,15 @@ Hard rules:
 
 ## 4. Confirm before committing
 
-Print:
-- The list of files you're about to stage.
-- The list of files you're deliberately leaving out, with one-line reasons.
-- The drafted commit message in a code block.
+Do not use subagents for this step or Step 5.
 
-Then ask the user via `AskUserQuestion` whether to commit, edit the message, or cancel. Do not commit until they approve.
+Ask the user via `AskUserQuestion` whether to commit or cancel. The dialog must be self-contained — do not rely on text printed before the tool call being visible:
+
+- Put the full drafted commit message in the `preview` field of the **Commit** option.
+- List the files you're about to stage, and the files you're deliberately leaving out (with one-line reasons), in the `question` text.
+- No separate "edit" option. If the user picks **Commit** with a note attached, apply the note's tweak to the message and commit without re-asking. If they answer via "Other", treat it as redraft instructions: revise and confirm again.
+
+Do not commit until they approve.
 
 ## 5. Commit
 
@@ -83,7 +86,7 @@ Anything requiring a judgment call or a real code change:
 - Lint or type errors that need manual code edits
 - Failing tests
 - Secret/credential detection findings
-- Commit-msg policy rejections (the user approved that exact message — show the adjusted message and confirm)
+- Commit-msg policy rejections (the user approved that exact message — confirm the adjusted message via `AskUserQuestion`, with the new message in the confirm option's `preview`)
 
 For these, summarize the failure in 1–3 lines, state your proposed fix, and ask via `AskUserQuestion` whether to **fix it**, **commit without those changes** (e.g. unstage the offending file, if that makes sense), or **cancel**. Apply the fix only on approval, then retry the commit.
 
