@@ -34,6 +34,49 @@ fi
 echo "${base:-unknown}"
 
 echo
+echo "== STACKED PRs =="
+stacked_cfg=$(git config --get skills.pr.stacked 2>/dev/null || true)
+echo "setting: skills.pr.stacked=${stacked_cfg:-unset}"
+if ! command -v gh >/dev/null 2>&1; then
+  echo "gh stack: gh not available"
+else
+  if gh extension list 2>/dev/null | grep -q 'github/gh-stack'; then
+    echo "gh stack: installed"
+  else
+    echo "gh stack: not installed (gh extension install github/gh-stack)"
+  fi
+
+  echo "current stack:"
+  stack_json=$(gh stack view --json 2>/dev/null || true)
+  if [ -z "$stack_json" ]; then
+    echo "  none — current branch is not in a tracked stack"
+  else
+    printf '%s\n' "$stack_json"
+  fi
+
+  candidates=$(gh pr list --state open --limit 50 \
+      --json number,headRefName,baseRefName,title,url \
+      -q '.[] | [.number, .headRefName, .baseRefName, .title, .url] | @tsv' 2>/dev/null |
+    while IFS=$'\t' read -r num head pr_base title url; do
+      [ -n "$head" ] || continue
+      [ "$head" = "$branch" ] && continue
+      [ "$head" = "${base:-}" ] && continue
+      ref="origin/$head"
+      git show-ref --verify --quiet "refs/remotes/origin/$head" || ref=$head
+      git rev-parse --verify --quiet "$ref" >/dev/null || continue
+      git merge-base --is-ancestor "$ref" HEAD 2>/dev/null || continue
+      ahead=$(git rev-list --count "$ref..HEAD" 2>/dev/null || echo 0)
+      printf '%s\t#%s\t%s\t-> %s\t%s\t%s\n' "$ahead" "$num" "$head" "$pr_base" "$title" "$url"
+    done | sort -n)
+  if [ -z "$candidates" ]; then
+    echo "candidates: none"
+  else
+    echo "candidates (commits-ahead, pr, head branch, its base, title, url — nearest first):"
+    printf '%s\n' "$candidates"
+  fi
+fi
+
+echo
 echo "== PUSH STATE =="
 upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)
 if [ -z "$upstream" ]; then
