@@ -53,19 +53,25 @@ Open a minimal, structured pull request for the current branch.
   Use when:
   - Opening a PR for finished branch work (`/pr`, optionally with a base branch, `draft`, or extra context)
   - You want a short, structured description (bullets over prose) without boilerplate
+  - Stacking a PR on top of another open PR you branched off
 
   Workflow:
-  1. Gathers context in one script call: base branch, commits and diff vs merge-base,
-     push state, PR templates, existing PR for the branch
-  2. Drafts a short imperative title (JIRA-prefixed when the branch names a ticket);
+  1. Gathers context in one script call: base branch, tracked `gh stack` state and parent PR
+     candidates, commits and diff vs merge-base, push state, PR templates, existing PR for the branch
+  2. Targets the parent PR's branch instead of the default base when stacked PRs are enabled
+     (`git config skills.pr.stacked true`, or `/pr stacked`), then links the PRs into a GitHub
+     Stack with `gh stack link`
+  3. Drafts a short imperative title (JIRA-prefixed when the branch names a ticket);
      suggests a real `feature/`/`bugfix/` remote branch name when the local name is temporary
-  3. Fills the repo's PR template if one exists (keeps all sections and checklists);
+  4. Fills the repo's PR template if one exists (keeps all sections and checklists);
      otherwise uses a minimal summary + Changes + Notes structure
-  4. Confirms title and body with the user before pushing the branch and creating the PR
-  5. Updates the existing PR instead if the branch already has one
+  5. Confirms title and body with the user before pushing the branch and creating the PR
+  6. Updates the existing PR instead if the branch already has one
 
   Requirements:
   - `gh` CLI authenticated for the repo's remote
+  - For stacked PRs: the `gh stack` extension (`gh extension install github/gh-stack`) — the skill
+    offers to install it, and falls back to a plain PR against the parent branch if you decline
 
 
 ### work
