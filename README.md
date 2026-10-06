@@ -94,6 +94,22 @@ Start working on a Jira ticket end-to-end. Fetches issue details via Atlassian M
   - Atlassian MCP plugin configured with Jira access
 
 
+### explain-diff
+Create a rich, interactive explanation of a diff, commit, branch, or PR as a single self-contained HTML file.
+
+Inspired by [Geoffrey Litt's Explain Diff prompt](https://gist.github.com/geoffreylitt/a29df1b5f9865506e8952488eac3d524).
+
+  Invoke explicitly:
+  - Claude Code: `/explain-diff <change>`
+  - Codex: `$explain-diff <change>`
+  - This skill never activates automatically.
+
+  Output:
+  - Beginner and focused background, core intuition with concrete examples and diagrams, and a grouped code walkthrough
+  - Five interactive multiple-choice questions with explanatory feedback
+  - Responsive HTML with inline CSS and JavaScript, saved outside the repo as `/tmp/YYYY-MM-DD-explanation-<slug>.html`
+
+
 ## Installation
 
 ```bash
@@ -102,7 +118,7 @@ npx skills add tuesd4y/agent-skills
 
 ## Usage
 
-Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
+Skills are available once installed. Automatic activation depends on each skill's invocation policy; `explain-diff` requires explicit invocation.
 
 **Examples:**
 ```
